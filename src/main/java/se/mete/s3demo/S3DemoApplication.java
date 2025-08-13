@@ -1,13 +1,21 @@
 package se.mete.s3demo;
 
 import io.github.cdimascio.dotenv.Dotenv;
-import io.github.cdimascio.dotenv.DotenvEntry;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.AwsCredentials;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
+import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
+import software.amazon.awssdk.services.s3.model.S3Object;
 
+import java.util.List;
 import java.util.Scanner;
+import java.util.stream.Collectors;
 
 @SpringBootApplication
 public class S3DemoApplication implements CommandLineRunner {
@@ -27,15 +35,12 @@ public class S3DemoApplication implements CommandLineRunner {
         String accessKey = dotenv.get("ACCESS_KEY");
         String secretKey = dotenv.get("SECRET_KEY");
 
-        // Check it, delete it later
-        System.out.println(bucketName + " " + accessKey + " " +  secretKey);
-
         S3Client s3Client = S3Client.builder()
-                .credentialsProvider(new AwsCredentialsprovider()) {
+                .credentialsProvider(new AwsCredentialsProvider() {
             @Override
-                    public AwsCredentials reosolverCredentials() {
-                return AwsBacisCredentials.builder()
-                        .accessKeyID(accessKey)
+                    public AwsCredentials resolveCredentials() {
+                return AwsBasicCredentials.builder()
+                        .accessKeyId(accessKey)
                         .secretAccessKey(secretKey).build();
             }
         })
@@ -55,14 +60,22 @@ public class S3DemoApplication implements CommandLineRunner {
             switch (choice) {
                 case 1:
                     System.out.println("Nu listas alla filer:");
-                    ListObjectsV2Request listreq = ListObjectsV2Rrequest.builder()
-                            .bucket(bucketname)
+                    ListObjectsV2Request listreq = ListObjectsV2Request.builder()
+                            .bucket(bucketName)
                             .build();
-                    listObjectsV2Response listRes = s3Client.listObjectsV2(listReq);
+                    ListObjectsV2Response listRes = s3Client.listObjectsV2(listreq);
                      List<String> filNamnen = listRes.contents().stream()
                         .map(S3Object::key)
                         .collect(Collectors.toList());
 
+                     // Prints out files in order
+                     int file_num = 1;
+                     for (String file : filNamnen)
+                     {
+                         System.out.println();
+                         System.out.println(file_num + "- " + file);
+                     }
+                    System.out.println("\n\n");
                     break;
 
                 case 2:
